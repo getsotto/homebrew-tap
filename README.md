@@ -1,20 +1,18 @@
 # Sotto Homebrew Tap
 
-This repository distributes the Sotto command-line interface through a
-Homebrew tap. The formula is an unadvertised preview for Sotto v0.9.0. Its
-automated native platform and package lifecycle checks pass. Sotto's main
-installation guides will promote the command after the isolated manual-use
-and maintenance/recovery checks are complete.
+This tap provides an **unadvertised preview** of the Sotto command-line
+interface. The package and automated checks are available, but the isolated
+identity workflow and live updater proposal have not yet been exercised. Do
+not treat this preview as launch-ready or use it for critical production
+secrets. See the [release-readiness record](releases/READINESS.md).
 
-The formula packages the existing CLI release for macOS 15 or later. Apple
-Silicon is the primary platform. Intel Homebrew is Tier 3 and is best-effort;
-Homebrew plans to remove Intel support in or after September 2027. Linux is
-not supported by this tap.
+The formula packages the existing signed Sotto CLI release for macOS 15 or
+later. Apple Silicon is the primary platform. Intel Homebrew is Tier 3 and
+best-effort; Homebrew plans to end Intel support in or after September 2027.
+Linux is not supported by this tap. See [Homebrew's support tiers](https://docs.brew.sh/Support-Tiers)
+for current platform details.
 
-The formula is an unadvertised preview. Sotto's main installation guides will
-add it after the manual-use and maintenance checks are complete. See
-[Homebrew's support tiers](https://docs.brew.sh/Support-Tiers) for the Intel
-support details.
+## Install and update
 
 Install the preview with:
 
@@ -22,22 +20,85 @@ Install the preview with:
 brew install getsotto/tap/sotto
 ```
 
-To check which executable your shell will run, use `which -a sotto`. An older
-installation earlier on `PATH` can take precedence. Choose which executable
-to use deliberately; this tap does not remove other installations or change
-your shell configuration. Homebrew installation does not initialise an
-identity or project.
+Update Homebrew's formula metadata and upgrade Sotto with:
 
-For installation options available today, see the [Sotto installation
-guide](https://github.com/getsotto/sotto#install). Learn more about Sotto in
-the [main repository](https://github.com/getsotto/sotto).
+```sh
+brew update
+brew upgrade getsotto/tap/sotto
+```
 
-The Sotto CLI is pre-1.0 software. See the main repository's
-[security policy](https://github.com/getsotto/sotto/blob/main/SECURITY.md) for
-its security status and reporting guidance.
+The formula installs Bash, Zsh, and Fish completion definitions. Shells may
+need their completion search path configured; follow Homebrew's
+[shell-completion guidance](https://docs.brew.sh/Shell-Completion) for your
+shell. The formula does not edit shell startup files.
 
-## Contributing
+## Start using Sotto
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and sign-off
-instructions. This repository is licensed under the Apache License 2.0; see
-[LICENSE](LICENSE).
+From the directory you want to use as a project, run:
+
+```sh
+sotto init
+```
+
+This creates a local identity and project and prints an Emergency Kit. Store
+that kit somewhere safe: a new device needs it to unlock the account. Do not
+paste the kit or master password into a terminal command, issue, or support
+message. Initialising Sotto uses this macOS user's local data directory and
+Keychain; Homebrew installation itself does not initialise an identity.
+
+Add a secret and run a command with it in the environment:
+
+```sh
+sotto set API_TOKEN
+sotto run -- npm start
+```
+
+The CLI prompts for secret values. `sotto run` supplies them to the child
+process without printing them. Local use does not require server login;
+`sotto login` and `sotto push` are optional when you want to sync encrypted
+state.
+
+For the full CLI guide, see the [Sotto README](https://github.com/getsotto/sotto#readme)
+and its [security policy](https://github.com/getsotto/sotto/blob/main/SECURITY.md).
+
+## Existing installations and PATH
+
+Homebrew does not remove another `sotto` binary or change your shell
+configuration. If a command still uses an older installation, inspect every
+match and the Homebrew executable:
+
+```sh
+which -a sotto
+brew list --versions sotto
+brew --prefix getsotto/tap/sotto
+"$(brew --prefix)/bin/sotto" --version
+```
+
+The first path reported by your shell is the one it runs. Choose which copy
+you want on `PATH`; only remove an older binary after confirming its location
+and installation method. Your project `sotto.toml`, local identity, encrypted
+data, and Keychain entries are separate from the formula.
+
+## Remove the package
+
+To remove only the Homebrew-managed package, run:
+
+```sh
+brew uninstall getsotto/tap/sotto
+```
+
+The formula has no uninstall hook. This removes the Homebrew package; it does
+not delete Sotto project files, local data, identities, Keychain entries, or
+other Sotto installations. Keep a secure copy of your Emergency Kit before
+removing Sotto or changing devices.
+
+## Support and security
+
+Sotto is pre-1.0 software and has not had a third-party cryptographic audit.
+The CLI, package, and service may change before 1.0. Review the [security
+policy](https://github.com/getsotto/sotto/blob/main/SECURITY.md) and
+[threat model](https://github.com/getsotto/sotto/blob/main/docs/THREAT-MODEL.md)
+before deciding whether it suits your data.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for maintainer and contributor
+guidance. This repository is licensed under Apache-2.0; see [LICENSE](LICENSE).
