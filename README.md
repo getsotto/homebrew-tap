@@ -41,11 +41,11 @@ From the directory you want to use as a project, run:
 sotto init
 ```
 
-This creates a local identity and project and prints an Emergency Kit. Store
-that kit somewhere safe: a new device needs it to unlock the account. Do not
-paste the kit or master password into a terminal command, issue, or support
-message. Initialising Sotto uses this macOS user's local data directory and
-Keychain; Homebrew installation itself does not initialise an identity.
+On first run, this creates a local identity and project and prints an Emergency
+Kit. Store that kit somewhere safe: a new device needs it to unlock the account.
+Do not paste the kit or master password into a terminal command, issue, or
+support message. Initialising Sotto uses this macOS user's local data directory
+and Keychain; Homebrew installation itself does not initialise an identity.
 
 Add a secret and run a command with it in the environment:
 
