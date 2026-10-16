@@ -101,8 +101,8 @@ jobs:
           set -euo pipefail
           brew install getsotto/tap/sotto
           brew test getsotto/tap/sotto
-          command -v sotto | grep -F "$(brew --prefix)/bin/sotto"
-          sotto --version | grep -F '0.9.0'
+          test "$(command -v sotto)" = "$HOME/.local/bin/sotto"
+          "$(brew --prefix)/bin/sotto" --version | grep -F '0.9.0'
           file "$(brew --prefix)/bin/sotto" | grep -F "$(cat "$RUNNER_TEMP/expected-architecture")"
           test -f "$(brew --prefix)/share/doc/sotto/LICENSE"
           test -f "$(brew --prefix)/share/doc/sotto/SECURITY.md"
