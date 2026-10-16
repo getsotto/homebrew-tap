@@ -144,6 +144,7 @@ def main() -> int:
     parser.add_argument("--rollbacks", type=Path, default=Path("releases/rollbacks.json"))
     parser.add_argument("--release-metadata", type=Path, help="use a saved GitHub release JSON response")
     parser.add_argument("--release-dir", type=Path, help="verify already downloaded release input files")
+    parser.add_argument("--cache-dir", type=Path, help="keep downloaded inputs in this temporary workflow directory")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args()
 
@@ -188,6 +189,9 @@ def main() -> int:
         else:
             if args.release_dir:
                 verified = verify_release_inputs(args.release_dir, version)
+            elif args.cache_dir:
+                download_inputs(version, args.cache_dir)
+                verified = verify_release_inputs(args.cache_dir, version)
             else:
                 with tempfile.TemporaryDirectory(prefix="sotto-release-plan-") as temporary:
                     inputs_dir = Path(temporary)

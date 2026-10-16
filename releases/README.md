@@ -18,6 +18,42 @@ an explicit version and only reopens a previously closed, unchanged proposal;
 it does not bypass release verification, held-version policy, or version
 ordering.
 
+## Automated proposals and incident recovery
+
+The scheduled updater runs daily at 06:17 UTC. It selects the highest
+published stable semantic version, verifies its release inputs, and opens or
+reuses one ready-for-review pull request per version. A manual run requires an
+exact published version tag. Set the manual retry option only when reopening a
+closed, unchanged proposal; a hold, changed release input, or downgrade remains
+blocked.
+
+The updater uses the repository's `GITHUB_TOKEN`, creates a signed-off bot
+commit, and never approves or merges its own pull request. The pull request
+workflow is started explicitly on the proposal head because pull-request
+workflow runs created by `GITHUB_TOKEN` can require manual workflow approval.
+The updater waits for the six required checks on that exact head and fails if
+the head changes while checks run. Maintainers review and merge the proposal
+themselves.
+
+Scheduled failures create or update one issue labelled
+`sotto-release-updater-failure`, including the failure stage, candidate when
+known, and run link. Repeated failures update that same issue. The workflow
+closes it only after this run completes the proposal path and verifies all
+required checks on the current proposal head. For an unchanged open proposal,
+it dispatches validation when a required check is missing or its latest run
+failed. If every check is already green, that no-op does not close an older
+incident; inspect it and close it manually after confirming the underlying
+failure is resolved. A held version or skipped release alone does not count as
+recovery. Check the Actions schedule and latest run as part of routine
+maintenance; a disabled schedule cannot report that it has stopped.
+
+If a failure issue remains open, inspect the referenced logs and proposal
+branch before retrying. Correct the underlying problem, then run the exact tag
+manually when the candidate was skipped after a transient failure. Do not
+delete or overwrite maintainer edits to a proposal branch. Resolve unexpected
+branch contents or duplicate proposals by hand, and close an incident only
+after the current-head checks confirm recovery.
+
 ## Held versions
 
 Add a held release under the `versions` object in `held-versions.json`, keyed by
