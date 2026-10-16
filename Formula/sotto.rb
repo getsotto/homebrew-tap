@@ -15,12 +15,13 @@ class Sotto < Formula
   def install
     target = Hardware::CPU.arm? ? "aarch64-apple-darwin" : "x86_64-apple-darwin"
     stage = "sotto-v#{version}-#{target}"
+    root = Pathname(stage).directory? ? Pathname(stage) : Pathname(".")
 
-    bin.install "#{stage}/sotto"
-    bash_completion.install "#{stage}/completions/sotto.bash" => "sotto"
-    zsh_completion.install "#{stage}/completions/sotto.zsh" => "_sotto"
-    fish_completion.install "#{stage}/completions/sotto.fish"
-    doc.install "#{stage}/LICENSE", "#{stage}/SECURITY.md", "#{stage}/THREAT-MODEL.md"
+    bin.install root/"sotto"
+    bash_completion.install root/"completions/sotto.bash" => "sotto"
+    zsh_completion.install root/"completions/sotto.zsh" => "_sotto"
+    fish_completion.install root/"completions/sotto.fish"
+    doc.install root/"LICENSE", root/"SECURITY.md", root/"THREAT-MODEL.md"
   end
 
   test do
