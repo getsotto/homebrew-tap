@@ -130,4 +130,4 @@ See [Homebrew support tiers](https://docs.brew.sh/Support-Tiers),
 and [GitHub workflow enablement](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows)
 for the upstream behaviours referenced here. Sotto is pre-1.0 and has not
 received a third-party cryptographic audit; see the [security policy](https://github.com/getsotto/sotto/blob/main/SECURITY.md)
-and [threat model](https://github.com/getsotto/sotto/blob/main/docs/THREAT-MODEL.md).
+and [threat model](https://github.com/getsotto/sotto/blob/main/THREAT-MODEL.md).

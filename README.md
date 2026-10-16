@@ -98,7 +98,7 @@ removing Sotto or changing devices.
 Sotto is pre-1.0 software and has not had a third-party cryptographic audit.
 The CLI, package, and service may change before 1.0. Review the [security
 policy](https://github.com/getsotto/sotto/blob/main/SECURITY.md) and
-[threat model](https://github.com/getsotto/sotto/blob/main/docs/THREAT-MODEL.md)
+[threat model](https://github.com/getsotto/sotto/blob/main/THREAT-MODEL.md)
 before deciding whether it suits your data.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for maintainer and contributor
