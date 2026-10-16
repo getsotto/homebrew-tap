@@ -99,8 +99,8 @@ jobs:
       - name: Install and exercise Sotto
         run: |
           set -euo pipefail
-          brew install --formula getsotto/tap/sotto
-          brew test --formula getsotto/tap/sotto
+          brew install getsotto/tap/sotto
+          brew test getsotto/tap/sotto
           command -v sotto | grep -F "$(brew --prefix)/bin/sotto"
           sotto --version | grep -F '0.9.0'
           file "$(brew --prefix)/bin/sotto" | grep -F "$(cat "$RUNNER_TEMP/expected-architecture")"
@@ -110,7 +110,7 @@ jobs:
       - name: Remove formula and confirm existing state remains
         run: |
           set -euo pipefail
-          brew uninstall --formula getsotto/tap/sotto
+          brew uninstall getsotto/tap/sotto
           test -x "$HOME/.local/bin/sotto"
           test "$("$HOME/.local/bin/sotto")" = 'existing executable'
           test "$(cat "$HOME/Library/Application Support/sotto/fixture.txt")" = 'preserve this fixture'
