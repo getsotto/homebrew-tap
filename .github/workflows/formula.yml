@@ -86,6 +86,11 @@ jobs:
           tap_dir="$(brew --repository)/Library/Taps/getsotto/homebrew-tap"
           mkdir -p "$(dirname "$tap_dir")"
           ln -s "$GITHUB_WORKSPACE" "$tap_dir"
+      - name: Record native host and Homebrew versions
+        run: |
+          sw_vers
+          uname -m
+          brew --version
       - name: Prepare harmless existing-installation and data fixtures
         env:
           EXPECTED_ARCH: ${{ matrix.architecture }}
@@ -100,6 +105,7 @@ jobs:
         run: |
           set -euo pipefail
           brew install getsotto/tap/sotto
+          brew list getsotto/tap/sotto
           brew test getsotto/tap/sotto
           test -x "$HOME/.local/bin/sotto"
           test "$("$HOME/.local/bin/sotto")" = 'existing executable'
