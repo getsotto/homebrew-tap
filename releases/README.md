@@ -1,5 +1,9 @@
 # Release planning records
 
+This runbook covers the tap's preview release updater. The current launch
+evidence and remaining promotion gates are in
+[`READINESS.md`](READINESS.md).
+
 The release planner reads `held-versions.json` and `rollbacks.json` and prints
 a report and formula patch. It does not write to GitHub or modify the checkout.
 It requires Python 3 and Cosign; release inputs are downloaded from the
@@ -27,13 +31,21 @@ exact published version tag. Set the manual retry option only when reopening a
 closed, unchanged proposal; a hold, changed release input, or downgrade remains
 blocked.
 
+Closing an automated update PR without merging records that version as
+skipped, so the schedule will not reopen it. To retry that unchanged release,
+run `update-release.yml` manually with the exact version and enable
+`manual_retry`. A hold is different: it blocks scheduled discovery and manual
+dispatch, and can only be cleared through a reviewed change to
+`held-versions.json` after the incident is resolved. Do not use manual retry
+to bypass a hold, changed signed input, or version ordering.
+
 The updater uses the repository's `GITHUB_TOKEN`, creates a signed-off bot
-commit, and never approves or merges its own pull request. The pull request
-workflow is started explicitly on the proposal head because pull-request
-workflow runs created by `GITHUB_TOKEN` can require manual workflow approval.
-The updater waits for the six required checks on that exact head and fails if
+commit, and never approves or merges its own pull request. Since GitHub can
+place pull-request runs created by `GITHUB_TOKEN` in an approval-required
+state, the updater explicitly dispatches the formula workflow on the proposal
+branch. It waits for all six required checks on that exact head and fails if
 the head changes while checks run. Maintainers review and merge the proposal
-themselves.
+themselves; a workflow check run is not a pull request review or approval.
 
 Scheduled failures create or update one issue labelled
 `sotto-release-updater-failure`, including the failure stage, candidate when
@@ -45,7 +57,13 @@ failed. If every check is already green, that no-op does not close an older
 incident; inspect it and close it manually after confirming the underlying
 failure is resolved. A held version or skipped release alone does not count as
 recovery. Check the Actions schedule and latest run as part of routine
-maintenance; a disabled schedule cannot report that it has stopped.
+maintenance; a disabled schedule cannot report that it has stopped. GitHub
+runs scheduled workflows only from the default branch and may delay or drop
+schedule runs during high load. In a public repository, GitHub disables
+scheduled workflows after 60 days without repository activity. Check the
+workflow's enabled state and last run in Actions. Re-enable a disabled
+workflow there; if the scheduling actor was suspended, change the cron entry
+in a reviewed commit to restart scheduled runs.
 
 If a failure issue remains open, inspect the referenced logs and proposal
 branch before retrying. Correct the underlying problem, then run the exact tag
