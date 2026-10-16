@@ -1,12 +1,31 @@
 # Sotto Homebrew Tap
 
-This repository will distribute the Sotto command-line interface through a
-Homebrew tap. It is under development and does not contain an installable
-formula yet, so Homebrew installation is not available from this tap.
+This repository distributes the Sotto command-line interface through a
+Homebrew tap. The initial formula is an unadvertised preview for Sotto v0.9.0.
+It has not passed the native platform and lifecycle checks required before
+the installation path is promoted in Sotto's main documentation.
 
-The planned formula will package the existing Sotto CLI release for macOS.
-Linux support is not included in the initial plan. The formula and its
-supported macOS versions will be documented here after they have been tested.
+The formula packages the existing CLI release for macOS 15 or later. Apple
+Silicon is the primary platform. Intel Homebrew is Tier 3 and is best-effort;
+Homebrew plans to remove Intel support in or after September 2027. Linux is
+not supported by this tap.
+
+The formula is an unadvertised preview. Sotto's main installation guides will
+add it after the manual-use and maintenance checks are complete. See
+[Homebrew's support tiers](https://docs.brew.sh/Support-Tiers) for the Intel
+support details.
+
+After this change is merged, install the preview with:
+
+```sh
+brew install getsotto/tap/sotto
+```
+
+To check which executable your shell will run, use `which -a sotto`. An older
+installation earlier on `PATH` can take precedence. Choose which executable
+to use deliberately; this tap does not remove other installations or change
+your shell configuration. Homebrew installation does not initialise an
+identity or project.
 
 For installation options available today, see the [Sotto installation
 guide](https://github.com/getsotto/sotto#install). Learn more about Sotto in

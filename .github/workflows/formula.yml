@@ -1,0 +1,117 @@
+name: formula
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-release:
+    name: verify signed release inputs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+      - name: Run release policy unit tests
+        run: python3 -m unittest discover --start-directory tests --verbose
+      - name: Download v0.9.0 release inputs
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sotto-release"
+          cd "$RUNNER_TEMP/sotto-release"
+          base="https://github.com/getsotto/sotto/releases/download/v0.9.0"
+          for file in SHA256SUMS SHA256SUMS.sigstore.json \
+            sotto-v0.9.0-aarch64-apple-darwin.tar.gz \
+            sotto-v0.9.0-x86_64-apple-darwin.tar.gz; do
+            curl --fail --location --silent --show-error "$base/$file" --output "$file"
+          done
+      - name: Verify formula inputs and reject altered inputs or signer
+        run: >-
+          python3 scripts/verify_release.py
+          --release-dir "$RUNNER_TEMP/sotto-release"
+          --formula Formula/sotto.rb
+          --version 0.9.0
+          --negative-tests
+      - name: Check candidate against the current default branch
+        run: |
+          git fetch origin main
+          python3 scripts/check_formula_version.py Formula/sotto.rb --base-ref origin/main
+
+  formula-style:
+    name: Homebrew style and audit
+    runs-on: macos-26
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Register checked out tap
+        run: |
+          tap_dir="$(brew --repository)/Library/Taps/getsotto/homebrew-tap"
+          mkdir -p "$(dirname "$tap_dir")"
+          ln -s "$GITHUB_WORKSPACE" "$tap_dir"
+      - name: Check formula style
+        run: brew style --formula getsotto/tap/sotto
+      - name: Audit formula
+        run: brew audit --strict --online --formula getsotto/tap/sotto
+
+  install:
+    name: install and preserve state (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            architecture: arm64
+          - os: macos-26
+            architecture: arm64
+          - os: macos-15-intel
+            architecture: x86_64
+          - os: macos-26-intel
+            architecture: x86_64
+    runs-on: ${{ matrix.os }}
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Register checked out tap
+        run: |
+          tap_dir="$(brew --repository)/Library/Taps/getsotto/homebrew-tap"
+          mkdir -p "$(dirname "$tap_dir")"
+          ln -s "$GITHUB_WORKSPACE" "$tap_dir"
+      - name: Prepare harmless existing-installation and data fixtures
+        env:
+          EXPECTED_ARCH: ${{ matrix.architecture }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin" "$HOME/Library/Application Support/sotto"
+          printf '#!/bin/sh\nprintf "existing executable\\n"\n' > "$HOME/.local/bin/sotto"
+          chmod +x "$HOME/.local/bin/sotto"
+          printf 'preserve this fixture\n' > "$HOME/Library/Application Support/sotto/fixture.txt"
+          printf '%s\n' "$EXPECTED_ARCH" > "$RUNNER_TEMP/expected-architecture"
+      - name: Install and exercise Sotto
+        run: |
+          set -euo pipefail
+          brew install --formula getsotto/tap/sotto
+          brew test --formula getsotto/tap/sotto
+          command -v sotto | grep -F "$(brew --prefix)/bin/sotto"
+          sotto --version | grep -F '0.9.0'
+          file "$(brew --prefix)/bin/sotto" | grep -F "$(cat "$RUNNER_TEMP/expected-architecture")"
+          test -f "$(brew --prefix)/share/doc/sotto/LICENSE"
+          test -f "$(brew --prefix)/share/doc/sotto/SECURITY.md"
+          test -f "$(brew --prefix)/share/doc/sotto/THREAT-MODEL.md"
+      - name: Remove formula and confirm existing state remains
+        run: |
+          set -euo pipefail
+          brew uninstall --formula getsotto/tap/sotto
+          test -x "$HOME/.local/bin/sotto"
+          test "$("$HOME/.local/bin/sotto")" = 'existing executable'
+          test "$(cat "$HOME/Library/Application Support/sotto/fixture.txt")" = 'preserve this fixture'
+          test ! -e "$(brew --prefix)/bin/sotto"
