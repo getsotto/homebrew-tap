@@ -77,6 +77,8 @@ jobs:
           tap_dir="$(brew --repository)/Library/Taps/getsotto/homebrew-tap"
           mkdir -p "$(dirname "$tap_dir")"
           ln -s "$GITHUB_WORKSPACE" "$tap_dir"
+      - name: Exercise controlled package upgrade and recovery fixtures
+        run: python3 tests/test_package_lifecycle.py
       - name: Check formula style
         run: brew style --formula getsotto/tap/sotto
       - name: Audit formula
