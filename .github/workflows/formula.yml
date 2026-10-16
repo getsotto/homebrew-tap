@@ -41,6 +41,7 @@ jobs:
           --version 0.9.0
           --negative-tests
       - name: Check candidate against the current default branch
+        if: github.event_name == 'pull_request'
         run: |
           git fetch origin main
           python3 scripts/check_formula_version.py Formula/sotto.rb --base-ref origin/main
