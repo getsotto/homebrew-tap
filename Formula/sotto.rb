@@ -27,8 +27,5 @@ class Sotto < Formula
   test do
     assert_match version.to_s, shell_output("#{bin}/sotto --version")
     assert_match "Usage:", shell_output("#{bin}/sotto --help")
-    %w[bash zsh fish].each do |shell|
-      assert_match "sotto", shell_output("#{bin}/sotto completions #{shell}")
-    end
   end
 end

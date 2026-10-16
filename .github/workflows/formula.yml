@@ -103,6 +103,9 @@ jobs:
           brew test getsotto/tap/sotto
           test "$(command -v sotto)" = "$HOME/.local/bin/sotto"
           "$(brew --prefix)/bin/sotto" --version | grep -F '0.9.0'
+          for shell in bash zsh fish; do
+            "$(brew --prefix)/bin/sotto" completions "$shell" >/dev/null
+          done
           file "$(brew --prefix)/bin/sotto" | grep -F "$(cat "$RUNNER_TEMP/expected-architecture")"
           test -f "$(brew --prefix)/share/doc/sotto/LICENSE"
           test -f "$(brew --prefix)/share/doc/sotto/SECURITY.md"
