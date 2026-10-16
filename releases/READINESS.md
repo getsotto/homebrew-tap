@@ -43,7 +43,7 @@ they do not extend Homebrew's own support tier.
 | Check | State | Evidence still needed |
 | --- | --- | --- |
 | Allow GitHub Actions to create pull requests | Disabled | `GET /repos/getsotto/homebrew-tap/actions/permissions/workflow` returned `default_workflow_permissions: read` and `can_approve_pull_request_reviews: false`. The combined create-and-approve setting must be enabled before the updater can open a proposal. The workflow itself must continue to avoid approving or merging PRs. |
-| Bot-created update PR and exact-head checks | Not run | After enabling the setting, wait for a genuine newer published release and verify that the merged updater opens a PR with `GITHUB_TOKEN` and all six formula checks pass on its current head. Do not invent a release or weaken version admission. Close the proposal without merging to exercise suppression. |
+| Bot-created update PR and exact-head checks | Not run | After enabling the setting, wait for a genuine newer published release and verify that the merged updater opens a PR with `GITHUB_TOKEN` and all six formula checks pass on its current head. Do not invent a release or weaken version admission. If the proposal is closed without merging to exercise suppression, run `update-release.yml` again with that exact version and `manual_retry` enabled; verify the same unchanged PR reopens and checks pass on its current head. Leave a valid proposal open for normal review, or document that it remains skipped if it is closed again. |
 | Isolated Apple Silicon identity workflow | Not run | In a disposable macOS user or VM with its own Homebrew installation, install the formula, initialise a disposable identity/project, lock, unlock, run a canary check that prints only presence, uninstall the formula, and confirm the disposable project/data remain. |
 | Scheduled updater run | Not yet observed | Inspect the first scheduled run after merge and confirm its selected version, outcome, and any incident handling. |
 | Intel identity and unlock | Not tested | No Intel Keychain result is implied by the automated install matrix or Apple Silicon smoke. |
@@ -82,7 +82,7 @@ account. The isolated identity smoke was therefore not run; no identity,
 Keychain entry, password, Emergency Kit, or secret was created or inspected.
 
 Do not promote the Homebrew command in the core or extension installation
-guides until the two launch checks above are recorded and a maintainer confirms
+guides until the three launch checks above are recorded and a maintainer confirms
 readiness. An update PR passing package checks alone does not complete this
 gate.
 
