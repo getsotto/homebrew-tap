@@ -2,8 +2,9 @@
 
 **Status: preview only. Promotion to the main Sotto installation guides is not
 approved.** The automated package matrix and updater's safe manual no-op path
-are verified. Two launch checks remain: a controlled bot-created update PR
-with current-head checks, and the isolated Apple Silicon identity workflow.
+are verified. Three launch checks remain: enabling workflow PR creation, a
+controlled bot-created update PR with current-head checks, and the isolated
+Apple Silicon identity workflow.
 
 ## Verified package and release evidence
 
@@ -21,8 +22,8 @@ with current-head checks, and the isolated Apple Silicon identity workflow.
 - The [PR 3 run](https://github.com/getsotto/homebrew-tap/actions/runs/38967349311)
   passed all six required contexts on the updater change. Main branch
   protection requires these contexts with strict current-base validation.
-- Repository settings allow workflow PR creation, and the default workflow
-  token permissions are read-only. PR 3 scopes write access by job.
+- Default workflow token permissions are read-only. PR 3 scopes write access
+  by job.
 - The [manual updater run](https://github.com/getsotto/homebrew-tap/actions/runs/38969361529)
   completed successfully on the merged updater at `023092f`. It verified the
   explicit v0.9.0 input and returned `no-op` because that version is already
@@ -41,7 +42,8 @@ they do not extend Homebrew's own support tier.
 
 | Check | State | Evidence still needed |
 | --- | --- | --- |
-| Bot-created update PR and exact-head checks | Not run | Safely create a controlled proposal through the merged updater using `GITHUB_TOKEN`, run the six formula checks on that PR's current head, and close the probe without merging it. Do not invent a release or weaken version admission. |
+| Allow GitHub Actions to create pull requests | Disabled | `GET /repos/getsotto/homebrew-tap/actions/permissions/workflow` returned `default_workflow_permissions: read` and `can_approve_pull_request_reviews: false`. The combined create-and-approve setting must be enabled before the updater can open a proposal. The workflow itself must continue to avoid approving or merging PRs. |
+| Bot-created update PR and exact-head checks | Not run | After enabling the setting, wait for a genuine newer published release and verify that the merged updater opens a PR with `GITHUB_TOKEN` and all six formula checks pass on its current head. Do not invent a release or weaken version admission. Close the proposal without merging to exercise suppression. |
 | Isolated Apple Silicon identity workflow | Not run | In a disposable macOS user or VM with its own Homebrew installation, install the formula, initialise a disposable identity/project, lock, unlock, run a canary check that prints only presence, uninstall the formula, and confirm the disposable project/data remain. |
 | Scheduled updater run | Not yet observed | Inspect the first scheduled run after merge and confirm its selected version, outcome, and any incident handling. |
 | Intel identity and unlock | Not tested | No Intel Keychain result is implied by the automated install matrix or Apple Silicon smoke. |

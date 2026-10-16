@@ -1,10 +1,11 @@
 # Sotto Homebrew Tap
 
 This tap provides an **unadvertised preview** of the Sotto command-line
-interface. The package and automated checks are available, but the isolated
-identity workflow and live updater proposal have not yet been exercised. Do
-not treat this preview as launch-ready or use it for critical production
-secrets. See the [release-readiness record](releases/READINESS.md).
+interface. The package and automated checks are available, but workflow PR
+creation is disabled and the isolated identity workflow and live updater
+proposal have not yet been exercised. Do not treat this preview as launch-ready
+or use it for critical production secrets. See the
+[release-readiness record](releases/READINESS.md).
 
 The formula packages the existing signed Sotto CLI release for macOS 15 or
 later. Apple Silicon is the primary platform. Intel Homebrew is Tier 3 and
