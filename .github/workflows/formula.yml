@@ -5,6 +5,7 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -56,7 +57,7 @@ jobs:
           set -euo pipefail
           python3 scripts/plan_release.py --version "$VERSION" --format json
       - name: Check candidate against the current default branch
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
         run: |
           git fetch origin main
           if git diff --quiet origin/main...HEAD -- Formula/sotto.rb; then

@@ -1,0 +1,112 @@
+name: update-release
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact published CLI version to verify, for example 0.10.0
+        required: true
+        type: string
+      manual_retry:
+        description: Reopen this version's previously closed, unchanged proposal
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sotto-release-updater
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    if: github.repository == 'getsotto/homebrew-tap' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
+    outputs:
+      version: ${{ steps.update.outputs.version }}
+      branch: ${{ steps.update.outputs.branch }}
+      status: ${{ steps.update.outputs.status }}
+      needs_validation: ${{ steps.update.outputs.needs_validation }}
+      recovered: ${{ steps.update.outputs.recovered }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+      - name: Prepare verified formula proposal
+        id: update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          MANUAL_RETRY: ${{ inputs.manual_retry }}
+        run: python3 scripts/update_release_pr.py
+
+  validate-proposal:
+    needs: propose
+    if: needs.propose.result == 'success' && needs.propose.outputs.needs_validation == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: main
+      - name: Dispatch and verify required formula checks on the proposal head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROPOSAL_BRANCH: ${{ needs.propose.outputs.branch }}
+        run: python3 scripts/dispatch_formula_checks.py
+
+  report-failure:
+    needs: [propose, validate-proposal]
+    if: failure() && github.event_name == 'schedule' && github.repository == 'getsotto/homebrew-tap' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: main
+      - name: Create or update the scheduled updater incident
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INCIDENT_MODE: failure
+          FAILURE_STAGE: ${{ needs.validate-proposal.result }} validation after ${{ needs.propose.result }} proposal
+          CANDIDATE_VERSION: ${{ needs.propose.outputs.version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 scripts/report_updater_incident.py
+
+  report-recovery:
+    needs: [propose, validate-proposal]
+    if: always() && needs.propose.result == 'success' && (needs.validate-proposal.result == 'success' || (needs.validate-proposal.result == 'skipped' && needs.propose.outputs.needs_validation == 'false')) && needs.propose.outputs.recovered == 'true' && github.repository == 'getsotto/homebrew-tap'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: main
+      - name: Close the incident only after current-head checks pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INCIDENT_MODE: recover
+          CONFIRMED_RECOVERY: true
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 scripts/report_updater_incident.py
