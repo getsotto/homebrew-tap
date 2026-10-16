@@ -1,3 +1,4 @@
+import json
 import sys
 import tempfile
 import unittest
@@ -5,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from check_formula_version import version_from
+from check_formula_version import rollback_is_authorised, version_from
 from verify_release import VerificationError, formula_pins, read_manifest
 
 
@@ -57,6 +58,25 @@ class VersionAdmissionTests(unittest.TestCase):
     def test_rejects_non_semantic_formula_version(self):
         with self.assertRaises(ValueError):
             version_from('url "https://example.com/releases/download/v0.9.0-rc.1/sotto.tar.gz"')
+
+    def test_only_an_exact_reviewed_rollback_pair_is_admitted(self):
+        record = {
+            "from": "0.10.0",
+            "to": "0.9.0",
+            "incident": "release recovery",
+            "compatibility_evidence": "compatibility report",
+            "compatibility_verified": True,
+            "reviewed_by": "maintainer",
+            "reviewed_at": "2026-10-16",
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "rollbacks.json"
+            path.write_text(json.dumps({"schema_version": 1, "rollbacks": [record]}), encoding="utf-8")
+            self.assertTrue(rollback_is_authorised(path, (0, 10, 0), (0, 9, 0)))
+            self.assertFalse(rollback_is_authorised(path, (0, 11, 0), (0, 9, 0)))
+            record["compatibility_verified"] = False
+            path.write_text(json.dumps({"schema_version": 1, "rollbacks": [record]}), encoding="utf-8")
+            self.assertFalse(rollback_is_authorised(path, (0, 10, 0), (0, 9, 0)))
 
 
 if __name__ == "__main__":

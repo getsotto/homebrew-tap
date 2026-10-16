@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 VERSION = re.compile(r"/releases/download/v([0-9]+\.[0-9]+\.[0-9]+)/")
@@ -18,6 +20,36 @@ def version_from(source: str) -> tuple[int, int, int]:
     if len(matches) != 1:
         raise ValueError("formula release URLs must select one plain semantic version")
     return tuple(int(part) for part in next(iter(matches)).split("."))
+
+
+def rollback_is_authorised(path: Path, current: tuple[int, int, int], candidate: tuple[int, int, int]) -> bool:
+    if candidate >= current or not path.is_file():
+        return False
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    if not isinstance(document, dict) or document.get("schema_version") != 1:
+        return False
+    records = document.get("rollbacks")
+    if not isinstance(records, list):
+        return False
+    from_version = ".".join(map(str, current))
+    to_version = ".".join(map(str, candidate))
+    for record in records:
+        if not isinstance(record, dict) or record.get("from") != from_version or record.get("to") != to_version:
+            continue
+        required = ("incident", "compatibility_evidence", "reviewed_by")
+        if any(not isinstance(record.get(field), str) or not record[field].strip() for field in required):
+            return False
+        if record.get("compatibility_verified") is not True:
+            return False
+        try:
+            date.fromisoformat(record.get("reviewed_at", ""))
+        except (TypeError, ValueError):
+            return False
+        return True
+    return False
 
 
 def main() -> int:
@@ -50,6 +82,9 @@ def main() -> int:
             return 0
         current = version_from(base.stdout)
         if candidate <= current:
+            if rollback_is_authorised(Path("releases/rollbacks.json"), current, candidate):
+                print(f"declared rollback to {candidate} is authorised with compatibility evidence")
+                return 0
             raise ValueError(
                 f"candidate version {candidate} must be newer than current default-branch version {current}"
             )

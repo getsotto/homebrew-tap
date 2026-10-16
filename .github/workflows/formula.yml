@@ -22,29 +22,48 @@ jobs:
           cosign-release: v3.1.3
       - name: Run release policy unit tests
         run: python3 -m unittest discover --start-directory tests --verbose
-      - name: Download v0.9.0 release inputs
+      - name: Select packaged CLI version
+        id: packaged
+        run: |
+          version="$(python3 -c 'from pathlib import Path; import sys; sys.path.insert(0, "scripts"); from check_formula_version import version_from; print(".".join(map(str, version_from(Path("Formula/sotto.rb").read_text(encoding="utf-8")))))')"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Download packaged release inputs
+        env:
+          VERSION: ${{ steps.packaged.outputs.version }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/sotto-release"
           cd "$RUNNER_TEMP/sotto-release"
-          base="https://github.com/getsotto/sotto/releases/download/v0.9.0"
+          base="https://github.com/getsotto/sotto/releases/download/v$VERSION"
           for file in SHA256SUMS SHA256SUMS.sigstore.json \
-            sotto-v0.9.0-aarch64-apple-darwin.tar.gz \
-            sotto-v0.9.0-x86_64-apple-darwin.tar.gz; do
+            "sotto-v$VERSION-aarch64-apple-darwin.tar.gz" \
+            "sotto-v$VERSION-x86_64-apple-darwin.tar.gz"; do
             curl --fail --location --silent --show-error "$base/$file" --output "$file"
           done
       - name: Verify formula inputs and reject altered inputs or signer
+        env:
+          VERSION: ${{ steps.packaged.outputs.version }}
         run: >-
           python3 scripts/verify_release.py
           --release-dir "$RUNNER_TEMP/sotto-release"
           --formula Formula/sotto.rb
-          --version 0.9.0
+          --version "$VERSION"
           --negative-tests
+      - name: Run verified release planner dry run
+        env:
+          VERSION: ${{ steps.packaged.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 scripts/plan_release.py --version "$VERSION" --format json
       - name: Check candidate against the current default branch
         if: github.event_name == 'pull_request'
         run: |
           git fetch origin main
-          python3 scripts/check_formula_version.py Formula/sotto.rb --base-ref origin/main
+          if git diff --quiet origin/main...HEAD -- Formula/sotto.rb; then
+            echo "Formula unchanged; version admission is not applicable."
+          else
+            python3 scripts/check_formula_version.py Formula/sotto.rb --base-ref origin/main
+          fi
 
   formula-style:
     name: Homebrew style and audit
