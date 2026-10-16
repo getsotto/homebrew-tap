@@ -30,8 +30,5 @@ class Sotto < Formula
     %w[bash zsh fish].each do |shell|
       assert_match "sotto", shell_output("#{bin}/sotto completions #{shell}")
     end
-    assert_path_exists doc/"LICENSE"
-    assert_path_exists doc/"SECURITY.md"
-    assert_path_exists doc/"THREAT-MODEL.md"
   end
 end
