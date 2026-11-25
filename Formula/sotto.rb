@@ -5,11 +5,11 @@ class Sotto < Formula
   depends_on macos: :sequoia
 
   if Hardware::CPU.arm?
-    url "https://github.com/getsotto/sotto/releases/download/v0.9.0/sotto-v0.9.0-aarch64-apple-darwin.tar.gz"
-    sha256 "0c62436bd0864c3a710c3bef1e62f9281ec794fe6d4263e3288659fa7b9cdc8c"
+    url "https://github.com/getsotto/sotto/releases/download/v0.11.1/sotto-v0.11.1-aarch64-apple-darwin.tar.gz"
+    sha256 "bafefb55febf59f47f3f15e45220bc5f2998573d11d553fe8f7837534baee132"
   else
-    url "https://github.com/getsotto/sotto/releases/download/v0.9.0/sotto-v0.9.0-x86_64-apple-darwin.tar.gz"
-    sha256 "a6c650f02ee09c3cc2418e287a56f96e14266813a55a59c1bc8c6e0db2cf3725"
+    url "https://github.com/getsotto/sotto/releases/download/v0.11.1/sotto-v0.11.1-x86_64-apple-darwin.tar.gz"
+    sha256 "be4628895e04bfcd869a2f3efca12e84971fdfff39a6cb02ac8b6094ae60bc02"
   end
 
   def install
